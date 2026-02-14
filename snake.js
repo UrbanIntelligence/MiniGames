@@ -109,6 +109,18 @@ function drawSnakeBoard(state) {
     ctx.fillStyle = index === 0 ? "#2d7f4f" : "#3f9a60";
     ctx.fillRect(segment.x * CELL_SIZE + 1, segment.y * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
   });
+
+  if (state.countdownMs > 0 && !state.gameOver) {
+    const seconds = Math.ceil(state.countdownMs / 1000);
+    ctx.fillStyle = "rgba(30, 30, 30, 0.25)";
+    ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 140px 'Trebuchet MS', 'Segoe UI', sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(seconds), CANVAS_SIZE / 2, CANVAS_SIZE / 2);
+  }
 }
 
 function drawBreakoutBoard(state) {
