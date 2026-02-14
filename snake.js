@@ -70,7 +70,7 @@ function setStatusText() {
     return;
   }
 
-  if (activeGame === "snake" && state.countdownMs > 0) {
+  if (state.countdownMs > 0) {
     const seconds = Math.ceil(state.countdownMs / 1000);
     statusEl.textContent = `Starting in ${seconds}`;
     pauseBtn.textContent = "Pause";
@@ -145,6 +145,18 @@ function drawBreakoutBoard(state) {
   ctx.beginPath();
   ctx.arc(state.ball.x, state.ball.y, state.ball.r, 0, Math.PI * 2);
   ctx.fill();
+
+  if (state.countdownMs > 0 && !state.gameOver) {
+    const seconds = Math.ceil(state.countdownMs / 1000);
+    ctx.fillStyle = "rgba(30, 30, 30, 0.25)";
+    ctx.fillRect(0, 0, BREAKOUT_BOARD_SIZE, BREAKOUT_BOARD_SIZE);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 140px 'Trebuchet MS', 'Segoe UI', sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(seconds), BREAKOUT_BOARD_SIZE / 2, BREAKOUT_BOARD_SIZE / 2);
+  }
 }
 
 function render() {
@@ -181,7 +193,17 @@ function updateSnake(ms) {
   }
 }
 
-function updateBreakout(steps) {
+function updateBreakout(ms) {
+  let remainingMs = ms;
+
+  if (breakoutState.countdownMs > 0 && !breakoutState.paused && !breakoutState.gameOver) {
+    const consumed = Math.min(remainingMs, breakoutState.countdownMs);
+    breakoutState = { ...breakoutState, countdownMs: breakoutState.countdownMs - consumed };
+    remainingMs -= consumed;
+    if (breakoutState.countdownMs > 0) return;
+  }
+
+  const steps = Math.max(1, Math.floor(remainingMs / FRAME_MS));
   for (let i = 0; i < steps; i += 1) {
     breakoutState = tickBreakout(breakoutState, breakoutInput);
     if (breakoutState.gameOver || breakoutState.paused) break;
@@ -192,8 +214,7 @@ function stepSimulation(ms) {
   if (activeGame === "snake") {
     updateSnake(ms);
   } else {
-    const steps = Math.max(1, Math.floor(ms / FRAME_MS));
-    updateBreakout(steps);
+    updateBreakout(ms);
   }
 }
 
@@ -339,11 +360,20 @@ window.render_game_to_text = () => {
   return JSON.stringify({
     game: "breakout",
     coordinateSystem: "origin=(0,0) top-left, +x right, +y down",
-    mode: breakoutState.gameOver ? (breakoutState.win ? "win" : "game_over") : breakoutState.paused ? "paused" : "running",
+    mode: breakoutState.gameOver
+      ? breakoutState.win
+        ? "win"
+        : "game_over"
+      : breakoutState.paused
+        ? "paused"
+        : breakoutState.countdownMs > 0
+          ? "countdown"
+          : "running",
     paddle: breakoutState.paddle,
     ball: breakoutState.ball,
     tunnel: breakoutState.tunnel,
     bricksRemaining: breakoutState.bricks.filter((brick) => brick.alive).length,
+    countdownMs: breakoutState.countdownMs,
     score: breakoutState.score,
   });
 };

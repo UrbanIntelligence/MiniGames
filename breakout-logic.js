@@ -1,4 +1,5 @@
 export const BREAKOUT_BOARD_SIZE = 480;
+export const BREAKOUT_START_COUNTDOWN_MS = 3000;
 
 const PADDLE_WIDTH = 88;
 const PADDLE_HEIGHT = 12;
@@ -87,6 +88,7 @@ export function createInitialBreakoutState() {
     },
     bricks: createBricks(),
     score: 0,
+    countdownMs: BREAKOUT_START_COUNTDOWN_MS,
     paused: false,
     gameOver: false,
     win: false,
@@ -111,7 +113,7 @@ export function nudgePaddle(state, direction) {
 }
 
 export function tickBreakout(state, input) {
-  if (state.paused || state.gameOver || state.win) return state;
+  if (state.paused || state.gameOver || state.win || state.countdownMs > 0) return state;
 
   const move = (input.right ? 1 : 0) - (input.left ? 1 : 0);
   const paddleX = clamp(
