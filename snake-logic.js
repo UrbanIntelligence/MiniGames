@@ -1,5 +1,6 @@
 export const GRID_SIZE = 20;
 export const INITIAL_DIRECTION = "right";
+export const START_COUNTDOWN_MS = 3000;
 
 const DIRECTION_OFFSETS = {
   up: { x: 0, y: -1 },
@@ -40,7 +41,11 @@ export function createFood(snake, gridSize = GRID_SIZE, randomFn = Math.random) 
 
 export function createInitialState(randomFn = Math.random, gridSize = GRID_SIZE) {
   const center = Math.floor(gridSize / 2);
-  const snake = [{ x: center, y: center }];
+  const snake = [
+    { x: center, y: center },
+    { x: center - 1, y: center },
+    { x: center - 2, y: center },
+  ];
 
   return {
     gridSize,
@@ -49,6 +54,7 @@ export function createInitialState(randomFn = Math.random, gridSize = GRID_SIZE)
     pendingDirection: INITIAL_DIRECTION,
     food: createFood(snake, gridSize, randomFn),
     score: 0,
+    countdownMs: START_COUNTDOWN_MS,
     paused: false,
     gameOver: false,
   };
@@ -76,7 +82,7 @@ function hasSelfCollision(nextHead, body) {
 }
 
 export function tick(state, randomFn = Math.random) {
-  if (state.gameOver || state.paused) return state;
+  if (state.gameOver || state.paused || state.countdownMs > 0) return state;
 
   const direction = state.pendingDirection;
   const offset = DIRECTION_OFFSETS[direction];

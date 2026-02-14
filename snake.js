@@ -70,6 +70,13 @@ function setStatusText() {
     return;
   }
 
+  if (activeGame === "snake" && state.countdownMs > 0) {
+    const seconds = Math.ceil(state.countdownMs / 1000);
+    statusEl.textContent = `Starting in ${seconds}`;
+    pauseBtn.textContent = "Pause";
+    return;
+  }
+
   statusEl.textContent = "Running";
   pauseBtn.textContent = "Pause";
 }
@@ -137,7 +144,19 @@ function render() {
 }
 
 function updateSnake(ms) {
-  snakeAccumulatorMs += ms;
+  let remainingMs = ms;
+
+  if (snakeState.countdownMs > 0 && !snakeState.paused && !snakeState.gameOver) {
+    const consumed = Math.min(remainingMs, snakeState.countdownMs);
+    snakeState = { ...snakeState, countdownMs: snakeState.countdownMs - consumed };
+    remainingMs -= consumed;
+    if (snakeState.countdownMs > 0) {
+      snakeAccumulatorMs = 0;
+      return;
+    }
+  }
+
+  snakeAccumulatorMs += remainingMs;
   while (snakeAccumulatorMs >= SNAKE_TICK_MS) {
     snakeState = tick(snakeState);
     snakeAccumulatorMs -= SNAKE_TICK_MS;
@@ -284,11 +303,18 @@ window.render_game_to_text = () => {
       game: "snake",
       coordinateSystem: "origin=(0,0) top-left, +x right, +y down",
       gridSize: snakeState.gridSize,
-      mode: snakeState.gameOver ? "game_over" : snakeState.paused ? "paused" : "running",
+      mode: snakeState.gameOver
+        ? "game_over"
+        : snakeState.paused
+          ? "paused"
+          : snakeState.countdownMs > 0
+            ? "countdown"
+            : "running",
       direction: snakeState.direction,
       pendingDirection: snakeState.pendingDirection,
       snake: snakeState.snake,
       food: snakeState.food,
+      countdownMs: snakeState.countdownMs,
       score: snakeState.score,
     });
   }
