@@ -48,7 +48,7 @@ function updateSwitcherUi() {
   hintEl.textContent =
     activeGame === "snake"
       ? "Snake: Arrow keys / WASD to move. Space to pause."
-      : "Breakout: Left/Right or A/D to move paddle. Space to pause.";
+      : "Breakout: Left/Right or A/D to move paddle. Right-side tunnel leads to top. Higher rows score more.";
 }
 
 function setStatusText() {
@@ -127,9 +127,14 @@ function drawBreakoutBoard(state) {
   ctx.fillStyle = "#fcfaf5";
   ctx.fillRect(0, 0, BREAKOUT_BOARD_SIZE, BREAKOUT_BOARD_SIZE);
 
-  ctx.fillStyle = "#d7d1c3";
+  if (state.tunnel) {
+    ctx.fillStyle = "rgba(40, 40, 40, 0.07)";
+    ctx.fillRect(state.tunnel.x, state.tunnel.y, state.tunnel.w, state.tunnel.h);
+  }
+
   state.bricks.forEach((brick) => {
     if (!brick.alive) return;
+    ctx.fillStyle = brick.color;
     ctx.fillRect(brick.x, brick.y, brick.w, brick.h);
   });
 
@@ -337,6 +342,7 @@ window.render_game_to_text = () => {
     mode: breakoutState.gameOver ? (breakoutState.win ? "win" : "game_over") : breakoutState.paused ? "paused" : "running",
     paddle: breakoutState.paddle,
     ball: breakoutState.ball,
+    tunnel: breakoutState.tunnel,
     bricksRemaining: breakoutState.bricks.filter((brick) => brick.alive).length,
     score: breakoutState.score,
   });

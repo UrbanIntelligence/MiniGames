@@ -10,12 +10,20 @@ const INITIAL_BALL_SPEED_Y = -3;
 
 const BRICK_ROWS = 5;
 const BRICK_COLS = 8;
+const TUNNEL_COL = BRICK_COLS - 1;
 const BRICK_PADDING = 6;
 const BRICK_TOP = 42;
 const BRICK_SIDE = 22;
 const BRICK_HEIGHT = 16;
 const BRICK_WIDTH =
   (BREAKOUT_BOARD_SIZE - BRICK_SIDE * 2 - BRICK_PADDING * (BRICK_COLS - 1)) / BRICK_COLS;
+const BRICK_ROW_STYLES = [
+  { color: "#d94f3d", points: 5 },
+  { color: "#e58a3a", points: 4 },
+  { color: "#e3c53f", points: 3 },
+  { color: "#5ca75d", points: 2 },
+  { color: "#4f86d9", points: 1 },
+];
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -24,13 +32,17 @@ function clamp(value, min, max) {
 function createBricks() {
   const bricks = [];
   for (let row = 0; row < BRICK_ROWS; row += 1) {
+    const rowStyle = BRICK_ROW_STYLES[row] || BRICK_ROW_STYLES[BRICK_ROW_STYLES.length - 1];
     for (let col = 0; col < BRICK_COLS; col += 1) {
+      if (col === TUNNEL_COL) continue;
       bricks.push({
         id: `${row}-${col}`,
         x: BRICK_SIDE + col * (BRICK_WIDTH + BRICK_PADDING),
         y: BRICK_TOP + row * (BRICK_HEIGHT + BRICK_PADDING),
         w: BRICK_WIDTH,
         h: BRICK_HEIGHT,
+        color: rowStyle.color,
+        points: rowStyle.points,
         alive: true,
       });
     }
@@ -48,6 +60,9 @@ function intersectsCircleRect(ball, rect) {
 }
 
 export function createInitialBreakoutState() {
+  const tunnelX = BRICK_SIDE + TUNNEL_COL * (BRICK_WIDTH + BRICK_PADDING);
+  const tunnelBottom = BRICK_TOP + BRICK_ROWS * (BRICK_HEIGHT + BRICK_PADDING) - BRICK_PADDING;
+
   return {
     boardSize: BREAKOUT_BOARD_SIZE,
     paddle: {
@@ -63,6 +78,12 @@ export function createInitialBreakoutState() {
       vx: INITIAL_BALL_SPEED_X,
       vy: INITIAL_BALL_SPEED_Y,
       r: BALL_RADIUS,
+    },
+    tunnel: {
+      x: tunnelX,
+      y: 0,
+      w: BRICK_WIDTH,
+      h: tunnelBottom,
     },
     bricks: createBricks(),
     score: 0,
@@ -140,7 +161,7 @@ export function tickBreakout(state, input) {
     if (!brick.alive || collidedBrick) return brick;
     if (intersectsCircleRect(ball, brick)) {
       collidedBrick = true;
-      score += 1;
+      score += brick.points;
       return { ...brick, alive: false };
     }
     return brick;
